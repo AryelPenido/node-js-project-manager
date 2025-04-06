@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Param, Post, UnprocessableEntityException } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post, Req, UnprocessableEntityException } from '@nestjs/common';
 
 import { GetAllTasksService } from 'src/domain/use-cases/tasks/get-all-tasks.service';
 import { GetTaskByIdService } from 'src/domain/use-cases/tasks/get-task-by-id.service';
@@ -6,39 +6,46 @@ import { CreateTaskService } from 'src/domain/use-cases/tasks/create-task.servic
 import { CreateTaskDto } from '../projects/dtos/create-task.dto';
 
 
-const userId = 1;
-
 @Controller('tasks')
 export class TasksController {
+
     constructor(
         private readonly getAllTasksUseCase: GetAllTasksService,
         private readonly getTaskByIdUseCase: GetTaskByIdService,
         private readonly createTaskUseCase: CreateTaskService,
     ) { }
+
     @Get()
-    async findAll() {
+    async findAll(@Req() request) {
         try {
-            return await this.getAllTasksUseCase.execute({ userId });
+            const loggedUser = request.user;
+            return await this.getAllTasksUseCase.execute({
+                userId: loggedUser.sub
+            });
         } catch (error) {
             throw new NotFoundException(error.message);
         }
     }
+
     @Get(':id')
-    async findOne(@Param('id') id: number) {
+    async findOne(@Req() request, @Param('id') id: number) {
         try {
+            const loggedUser = request.user;
             return await this.getTaskByIdUseCase.execute({
-                userId,
+                userId: loggedUser.sub,
                 taskId: id,
             });
         } catch (error) {
             throw new NotFoundException(error.message);
         }
     }
+    
     @Post()
-    async create(@Body() createTaskDto: CreateTaskDto) {
+    async create(@Req() request, @Body() createTaskDto: CreateTaskDto) {
         try {
+            const loggedUser = request.user;
             return await this.createTaskUseCase.execute({
-                userId,
+                userId: loggedUser.sub,
                 task: createTaskDto,
             });
         } catch (error) {

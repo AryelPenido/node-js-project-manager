@@ -17,4 +17,8 @@ export class UsersRepositoryService
     add(payload: DeepPartial<IUser>): Promise<IUser> {
         return this.save(payload) as Promise<IUser>;
     }
+
+    findByEmail(email: string): Promise<IUser | null > {
+        return this.findOneBy({ email });
+        }
 }
